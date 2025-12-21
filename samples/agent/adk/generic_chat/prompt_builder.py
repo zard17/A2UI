@@ -112,5 +112,6 @@ def get_generator_prompt(template_id: str = None) -> str:
     - Do NOT change the `surfaceUpdate` or `beginRendering` sections unless absolutely necessary, stick to the data model.
     - Example: If the template has a key "title", set its value to a relevant title for the user's query.
     
-    Ensure the JSON part allows the A2UI spec (implicitly followed by using the template).
+    - Ensure the JSON part allows the A2UI spec (implicitly followed by using the template).
+    - CRITICAL: Parsing is strict. You MUST escape all double quotes and newlines within the `valueString` fields. Use `\\n` for newlines and `\\\"` for quotes.
     """

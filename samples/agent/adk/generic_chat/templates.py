@@ -104,5 +104,69 @@ TEMPLATES = {
   }} }}
 ]
 """
+    },
+    "WEATHER_FORECAST": {
+        "description": "Use this when the user asks for weather information (e.g., 'weather in Tokyo', 'forecast for tomorrow').",
+        "json": """
+[
+  {{ "beginRendering": {{ "surfaceId": "weather", "root": "weather-card", "styles": {{ "primaryColor": "#2196F3", "font": "Roboto" }} }} }},
+  {{ "surfaceUpdate": {{
+    "surfaceId": "weather",
+    "components": [
+      {{ "id": "weather-card", "component": {{ "Card": {{ "child": "weather-layout", "children": [] }} }} }},
+      {{ "id": "weather-layout", "component": {{ "Column": {{ "children": {{ "explicitList": ["location-text", "current-row", "forecast-list"] }} }} }} }},
+      {{ "id": "location-text", "component": {{ "Text": {{ "usageHint": "h2", "text": {{ "path": "location" }} }} }} }},
+      {{ "id": "current-row", "component": {{ "Row": {{ "children": {{ "explicitList": ["icon-image", "temp-text", "condition-text"] }} }} }} }},
+      {{ "id": "icon-image", "weight": 1, "component": {{ "Image": {{ "url": {{ "path": "iconUrl" }} }} }} }},
+      {{ "id": "temp-text", "weight": 1, "component": {{ "Text": {{ "usageHint": "h1", "text": {{ "path": "temperature" }} }} }} }},
+      {{ "id": "condition-text", "weight": 2, "component": {{ "Text": {{ "text": {{ "path": "condition" }} }} }} }},
+      {{ "id": "forecast-list", "component": {{ "List": {{ "direction": "vertical", "children": {{ "template": {{ "componentId": "forecast-item", "dataBinding": "/forecast" }} }} }} }} }},
+      {{ "id": "forecast-item", "component": {{ "Row": {{ "children": {{ "explicitList": ["day-text", "high-low-text"] }} }} }} }},
+      {{ "id": "day-text", "weight": 1, "component": {{ "Text": {{ "text": {{ "path": "day" }} }} }} }},
+      {{ "id": "high-low-text", "weight": 1, "component": {{ "Text": {{ "text": {{ "path": "highLow" }} }} }} }}
+    ]
+  }} }},
+  {{ "dataModelUpdate": {{
+    "surfaceId": "weather",
+    "path": "/",
+    "contents": [
+      {{ "key": "location", "valueString": "San Francisco, CA" }},
+      {{ "key": "iconUrl", "valueString": "https://ssl.gstatic.com/onebox/weather/64/sunny.png" }},
+      {{ "key": "temperature", "valueString": "72°F" }},
+      {{ "key": "condition", "valueString": "Sunny" }},
+      {{ "key": "forecast", "valueMap": [] }}
+    ]
+  }} }}
+]
+"""
+    },
+    "ARTICLE_VIEW": {
+        "description": "Use this for providing detailed information, news, encyclopedia entries, or explanations about a specific topic.",
+        "json": """
+[
+  {{ "beginRendering": {{ "surfaceId": "article", "root": "article-column", "styles": {{ "primaryColor": "#333333", "font": "Georgia" }} }} }},
+  {{ "surfaceUpdate": {{
+    "surfaceId": "article",
+    "components": [
+      {{ "id": "article-column", "component": {{ "Column": {{ "children": {{ "explicitList": ["hero-image", "article-title", "author-text", "divider", "article-body"] }} }} }} }},
+      {{ "id": "hero-image", "component": {{ "Image": {{ "url": {{ "path": "imageUrl" }} }} }} }},
+      {{ "id": "article-title", "component": {{ "Text": {{ "usageHint": "h1", "text": {{ "path": "title" }} }} }} }},
+      {{ "id": "author-text", "component": {{ "Text": {{ "text": {{ "path": "author" }} }} }} }},
+      {{ "id": "divider", "component": {{ "Divider": {{}} }} }},
+      {{ "id": "article-body", "component": {{ "Text": {{ "text": {{ "path": "body" }} }} }} }}
+    ]
+  }} }},
+  {{ "dataModelUpdate": {{
+    "surfaceId": "article",
+    "path": "/",
+    "contents": [
+      {{ "key": "title", "valueString": "Article Title" }},
+      {{ "key": "imageUrl", "valueString": "https://via.placeholder.com/600x300" }},
+      {{ "key": "author", "valueString": "By Author Name" }},
+      {{ "key": "body", "valueString": "Article content goes here..." }}
+    ]
+  }} }}
+]
+"""
     }
 }
