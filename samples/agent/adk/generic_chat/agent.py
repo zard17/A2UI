@@ -79,11 +79,20 @@ class GenericChatAgent:
         decision_message = types.Content(role="user", parts=[types.Part.from_text(text=query)])
         
         decision_response_text = ""
-        async for event in selector_runner.run_async(
-            user_id=self._user_id, session_id=selector_session_id, new_message=decision_message
-        ):
-             if event.is_final_response() and event.content:
-                decision_response_text = "\n".join([p.text for p in event.content.parts if p.text])
+        decision_response_text = ""
+        try:
+            async for event in selector_runner.run_async(
+                user_id=self._user_id, session_id=selector_session_id, new_message=decision_message
+            ):
+                 if event.is_final_response() and event.content:
+                    decision_response_text = "\n".join([p.text for p in event.content.parts if p.text])
+        except Exception as e:
+            logger.error(f"Selector LLM failed: {e}")
+            yield {
+                "is_task_complete": True,
+                "content": f"I'm sorry, I'm having trouble connecting to my brain right now (Rate Limit or Error). Please try again in 30 seconds.\n\n---a2ui_JSON---\n```json\n[\n  {{ \"beginRendering\": {{ \"surfaceId\": \"main\", \"root\": \"root-column\" }} }},\n  {{ \"surfaceUpdate\": {{\n    \"surfaceId\": \"main\",\n    \"components\": [\n      {{ \"id\": \"root-column\", \"component\": {{ \"Column\": {{ \"children\": {{ \"explicitList\": [\"message-card\"] }} }} }} }},\n      {{ \"id\": \"message-card\", \"component\": {{ \"Card\": {{ \"child\": \"message-text\" }} }} }},\n      {{ \"id\": \"message-text\", \"component\": {{ \"Text\": {{ \"text\": {{ \"literal\": \"I'm sorry, I'm having trouble connecting to my brain right now. Please try again in a few moments.\" }} }} }} }}\n    ]\n  }} }}\n]\n```"
+            }
+            return
 
         logger.info(f"--- Selector Decision: {decision_response_text} ---")
         
@@ -119,19 +128,26 @@ class GenericChatAgent:
         # Pass the original query to the generator
         generator_message = types.Content(role="user", parts=[types.Part.from_text(text=query)])
         
-        async for event in generator_runner.run_async(
-            user_id=self._user_id, session_id=generator_session_id, new_message=generator_message
-        ):
-            if event.is_final_response():
-                if event.content and event.content.parts:
-                     final_content = "\n".join([p.text for p in event.content.parts if p.text])
-                     yield {
-                        "is_task_complete": True,
-                        "content": final_content,
+        try:
+            async for event in generator_runner.run_async(
+                user_id=self._user_id, session_id=generator_session_id, new_message=generator_message
+            ):
+                if event.is_final_response():
+                    if event.content and event.content.parts:
+                        final_content = "\n".join([p.text for p in event.content.parts if p.text])
+                        yield {
+                            "is_task_complete": True,
+                            "content": final_content,
+                        }
+                else:
+                    yield {
+                        "is_task_complete": False,
+                        "updates": "Thinking...",
                     }
-            else:
-                 yield {
-                    "is_task_complete": False,
-                    "updates": "Thinking...",
-                }
+        except Exception as e:
+            logger.error(f"Generator LLM failed: {e}")
+            yield {
+                "is_task_complete": True,
+                "content": f"I'm sorry, I encountered an error generating the response (Rate Limit or Error). Please try again later.\n\n---a2ui_JSON---\n```json\n[\n  {{ \"beginRendering\": {{ \"surfaceId\": \"main\", \"root\": \"root-column\" }} }},\n  {{ \"surfaceUpdate\": {{\n    \"surfaceId\": \"main\",\n    \"components\": [\n      {{ \"id\": \"root-column\", \"component\": {{ \"Column\": {{ \"children\": {{ \"explicitList\": [\"message-card\"] }} }} }} }},\n      {{ \"id\": \"message-card\", \"component\": {{ \"Card\": {{ \"child\": \"message-text\" }} }} }},\n      {{ \"id\": \"message-text\", \"component\": {{ \"Text\": {{ \"text\": {{ \"literal\": \"I'm sorry, I'm having trouble generating the response right now. Please try again in a few moments.\" }} }} }} }}\n    ]\n  }} }}\n]\n```"
+            }
 
