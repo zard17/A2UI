@@ -122,3 +122,9 @@ python -m generic_chat.scripts.generate_templates --count 5
 python -m generic_chat.scripts.generate_templates --topic "Crypto Dashboard"
 ```
 The new templates will be saved to `generic_chat/templates/` and automatically loaded when you restart the agent.
+
+**To verify a generated template (e.g., Music Player):**
+1.  Ensure `generic_chat/templates/music_player.json` exists.
+2.  Restart the agent: `python -m generic_chat`
+3.  Ask: **"Show me a music player"**
+4.  The agent should find the new `MUSIC_PLAYER` template via search and render it.
