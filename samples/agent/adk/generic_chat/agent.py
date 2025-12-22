@@ -28,6 +28,7 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from .prompt_builder import get_generator_prompt, get_selector_prompt
+from .utils.searcher import TemplateSearcher
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,16 @@ class GenericChatAgent:
         
         # We will spin up a fresh runner/agent for each turn in this PoC to strictly separate instructions
         # calling it "multi-turn within one request" style
-        self.model_name = os.getenv("LITELLM_MODEL", "gemini/gemini-2.5-flash")
+        # We will spin up a fresh runner/agent for each turn in this PoC to strictly separate instructions
+        # calling it "multi-turn within one request" style
+        self.model_name = os.getenv("LITELLM_MODEL", "gemini/gemini-2.0-flash-exp")
+        
+        # Initialize the searcher (computes embeddings on startup)
+        try:
+            self.searcher = TemplateSearcher(model_name=os.getenv("EMBEDDING_MODEL", "gemini/text-embedding-004"))
+        except Exception as e:
+            logger.error(f"Failed to initialize TemplateSearcher: {e}")
+            self.searcher = None
 
     def _create_runner(self, instruction: str) -> Runner:
         agent = LlmAgent(
@@ -65,7 +75,13 @@ class GenericChatAgent:
         logger.info(f"--- Processing query: {query} ---")
         
         # Step 1: Decision (UI vs Text)
-        selector_prompt = get_selector_prompt()
+        
+        # 1.1 Search for relevant templates
+        candidate_templates = None
+        if self.searcher:
+            candidate_templates = self.searcher.search(query)
+            
+        selector_prompt = get_selector_prompt(candidate_templates)
         selector_runner = self._create_runner(instruction=selector_prompt)
         
         # Create session for selector

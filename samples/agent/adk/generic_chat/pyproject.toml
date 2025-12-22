@@ -15,6 +15,7 @@ dependencies = [
     "uvicorn>=0.20.0",
     "fastapi>=0.95.0",
     "a2ui",
+    "numpy",
 ]
 
 [tool.hatch.build.targets.wheel]
