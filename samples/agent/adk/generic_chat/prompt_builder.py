@@ -16,14 +16,19 @@
 from .templates import TEMPLATES
 from .a2ui_schema import A2UI_SCHEMA
 
-def get_selector_prompt() -> str:
+def get_selector_prompt(candidate_templates: list = None) -> str:
     """
     Constructs the prompt for the decision step (Text vs UI vs Dynamic UI).
     """
     
     template_descriptions = []
-    for key, value in TEMPLATES.items():
-        template_descriptions.append(f"- {key}: {value['description']}")
+    
+    # If no candidates provided, use all templates (legacy behavior)
+    templates_to_use = candidate_templates if candidate_templates else TEMPLATES.keys()
+
+    for key in templates_to_use:
+        if key in TEMPLATES:
+            template_descriptions.append(f"- {key}: {TEMPLATES[key]['description']}")
     
     template_list_str = "\n".join(template_descriptions)
 
