@@ -18,6 +18,33 @@ The agent can handle various types of queries and select the most appropriate UI
 2.  **Generator**: An LLM generates the final A2UI JSON response using the selected template.
 3.  **Renderer**: The client (e.g., Web, iOS) renders the A2UI JSON into native UI components.
 
+## Architecture
+
+```mermaid
+graph TD
+    User([User Query]) --> Agent[GenericChatAgent]
+    
+    subgraph "Phase 1: Decision"
+        Agent --> Searcher[Template Searcher]
+        Searcher -- "1. Find Candidates" --> Index[(Template Index)]
+        Index -- "Relevant Templates" --> Searcher
+        Searcher --> Selector[Selector LLM]
+        Selector -- "2. Choose Strategy" --> Decision{Decision?}
+    end
+    
+    subgraph "Phase 2: Generation"
+        Decision -- "Text Only" --> GenText[Text Generator]
+        Decision -- "Template" --> GenTemplate[Template Filler]
+        Decision -- "Dynamic UI" --> GenDynamic[Dynamic UI Generator]
+        
+        GenText --> Response[Response]
+        GenTemplate --> Response
+        GenDynamic --> Response
+    end
+    
+    Response --> Client([Client])
+```
+
 ## Running the Agent
 
 ```bash
