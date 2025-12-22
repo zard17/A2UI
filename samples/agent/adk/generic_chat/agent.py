@@ -107,14 +107,15 @@ class GenericChatAgent:
 
         # Step 2: Generation
         template_id = decision_data.get("template_id")
-        decision_type = decision_data.get("decision", "TEXT")
+        decision = decision_data.get("decision", "TEXT")
         
-        template_id = decision_data.get("template_id", "SIMPLE_MESSAGE") # Default to SIMPLE_MESSAGE if UI but no ID, or if we force it.
+        is_dynamic = (decision == "DYNAMIC_UI")
         
-        # Even if decision is TEXT, we might want to wrap it in simple message if we really want consistency. 
-        # But let's trust the prompt update to drive decision to UI.
-        
-        generator_prompt = get_generator_prompt(template_id)
+        if not is_dynamic and not template_id:
+             # Default fallback if regular UI but missing ID
+             template_id = "SIMPLE_MESSAGE"
+
+        generator_prompt = get_generator_prompt(template_id, is_dynamic=is_dynamic)
         generator_runner = self._create_runner(instruction=generator_prompt)
         
         # Create session for generator

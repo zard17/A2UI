@@ -14,42 +14,11 @@
 # limitations under the License.
 
 from .templates import TEMPLATES
-
-# The A2UI schema remains constant for all A2UI responses.
-# We include a minimal version here or reuse the one from other samples if available.
-# For simplicity and self-containment, I will define the schema here, 
-# ensuring it matches the v0.8 spec we saw in the restaurant finder sample.
-
-A2UI_SCHEMA = r'''
-{
-  "title": "A2UI Message Schema",
-  "type": "object",
-  "properties": {
-    "beginRendering": { "type": "object", "required": ["root", "surfaceId"] },
-    "surfaceUpdate": {
-      "type": "object",
-      "required": ["surfaceId", "components"],
-      "properties": {
-        "components": {
-           "type": "array",
-           "items": { "type": "object", "required": ["id", "component"] }
-        }
-      }
-    },
-    "dataModelUpdate": {
-      "type": "object",
-      "required": ["contents", "surfaceId"],
-      "properties": {
-         "contents": { "type": "array" }
-      }
-    }
-  }
-}
-'''
+from .a2ui_schema import A2UI_SCHEMA
 
 def get_selector_prompt() -> str:
     """
-    Constructs the prompt for the decision step (Text vs UI).
+    Constructs the prompt for the decision step (Text vs UI vs Dynamic UI).
     """
     
     template_descriptions = []
@@ -60,7 +29,7 @@ def get_selector_prompt() -> str:
 
     return f"""
     You are an intelligent assistant that helps users with a variety of tasks.
-    Your goal is to decide whether the user's request is best served by a simple text response or a rich UI response.
+    Your goal is to decide whether the user's request is best served by a text response, a pre-defined UI template, or a dynamically generated UI.
 
     AVAILABLE UI TEMPLATES:
     {template_list_str}
@@ -68,26 +37,45 @@ def get_selector_prompt() -> str:
     INSTRUCTIONS:
     1. Analyze the user's request.
     2. detailed rules:
-        - If the request asks for a list, comparison, or structured data (e.g. "show me", "list", "top 5"), choose 'UI' and the 'SINGLE_COLUMN_LIST' template.
-        - If the request implies filling out information (e.g. "sign up", "register", "contact form"), choose 'UI' and the 'FORM' template.
-        - If the request is a confirmation of a previous action, choose 'UI' and the 'CONFIRMATION' template.
-        - If the user's request is best served by a simple text answer (e.g. "tell me a joke", "who are you"), you MUST select 'UI' and use the 'SIMPLE_MESSAGE' template.
-        - You should almost ALWAYS select 'UI'. Only select 'TEXT' if you absolutely cannot fit the response into any template (which shouldn't happen).
+        - If the request matches a specific template use case:
+            - Asking for a list/comparison -> 'UI' + 'SINGLE_COLUMN_LIST'
+            - Asking to fill form -> 'UI' + 'FORM'
+            - Confirmation -> 'UI' + 'CONFIRMATION'
+            - Simple text/joke -> 'UI' + 'SIMPLE_MESSAGE'
+        - If the request requires a rich interface but DOES NOT fit any of the above templates (e.g. "Create a dashboard", "Show a complex layout"), you MUST select 'DYNAMIC_UI'.
+        - Only select 'TEXT' if it's an error or absolutely no UI is needed.
     
     OUTPUT FORMAT:
     You MUST output a valid JSON object with the following structure:
     {{
-        "decision": "UI" or "TEXT",
+        "decision": "UI" or "DYNAMIC_UI" or "TEXT",
         "template_id": "TEMPLATE_NAME" (if decision is UI, otherwise null),
         "reason": "Brief explanation of your decision"
     }}
     """
 
-def get_generator_prompt(template_id: str = None) -> str:
+def get_generator_prompt(template_id: str = None, is_dynamic: bool = False) -> str:
     """
     Constructs the prompt for generating the final response.
     """
     
+    if is_dynamic:
+        return f"""
+        You are an advanced UI design assistant. Your goal is to generate a dynamic A2UI interface strictly following the schema.
+
+        You MUST follow these rules:
+        1.  Your response MUST be in two parts, separated by the delimiter: `---a2ui_JSON---`.
+        2.  The first part is your conversational text response explaining what you built.
+        3.  The second part must be a list of A2UI messages.
+        4.  You MUST include a `beginRendering` message to initialize the surface.
+        5.  You MUST include a `surfaceUpdate` message to define the components.
+        6.  Example structure: `[ {{ "beginRendering": ... }}, {{ "surfaceUpdate": {{ "surfaceId": ..., "components": ... }} }} ]`
+        7.  You are free to design the UI using Rows, Columns, Cards, Text, Images, etc., as defined in the schema.
+
+        --- A2UI JSON SCHEMA ---
+        {A2UI_SCHEMA}
+        """
+
     if not template_id or template_id not in TEMPLATES:
         # Fallback to generic text agent if no valid template
         return """

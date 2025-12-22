@@ -110,6 +110,7 @@ class GenericChatAgentExecutor(AgentExecutor):
                     final_parts.append(Part(root=TextPart(text=text_content.strip())))
 
                 if json_string.strip():
+                    logger.info(f"Raw UI JSON received: {json_string}")
                     try:
                         json_string_cleaned = (
                             json_string.strip().lstrip("```json").rstrip("```").strip()
@@ -118,6 +119,10 @@ class GenericChatAgentExecutor(AgentExecutor):
 
                         if isinstance(json_data, list):
                             for message in json_data:
+                                # Auto-fix for common LLM error: missing wrapper key for surfaceUpdate
+                                if "surfaceId" in message and "components" in message and "surfaceUpdate" not in message:
+                                    logger.warning("Auto-fixing malformed surfaceUpdate message (missing wrapper)")
+                                    message = {"surfaceUpdate": message}
                                 final_parts.append(create_a2ui_part(message))
                         else:
                             final_parts.append(create_a2ui_part(json_data))
