@@ -170,3 +170,34 @@ TEMPLATES = {
 """
     }
 }
+
+# Dynamic Loading: Load any JSON templates found in the 'templates' directory
+import os
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
+
+if os.path.exists(TEMPLATES_DIR):
+    for filename in os.listdir(TEMPLATES_DIR):
+        if filename.endswith(".json"):
+            try:
+                filepath = os.path.join(TEMPLATES_DIR, filename)
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                    
+                # Validate required fields
+                if "id" in data and "description" in data and "template_json" in data:
+                    TEMPLATES[data["id"]] = {
+                        "description": data["description"],
+                        "keywords": data.get("keywords", ""),
+                        "json": data["template_json"]
+                    }
+                    logger.info(f"Loaded dynamic template: {data['id']}")
+                else:
+                    logger.warning(f"Skipping invalid template file: {filename}")
+            except Exception as e:
+                logger.error(f"Failed to load template {filename}: {e}")
+

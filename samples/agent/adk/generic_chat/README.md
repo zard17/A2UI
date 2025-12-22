@@ -97,3 +97,28 @@ Here are tested queries you can try with the agent:
 -   **Settings**: "Create a settings menu with a 'Dark Mode' toggle, a 'Notifications' checkbox, and a 'Save' button."
 -   **News**: "Design a news feed with one large headline story at the top and three smaller list items below it."
 -   **Login**: "Make a login screen with a logo at the top, email and password fields, and a 'Forgot Password' link at the bottom."
+
+## Verification
+
+### 1. Template Search
+To verify the semantic search finds the right templates:
+1.  Start the agent: `python -m generic_chat`
+2.  Ask: **"Show me the top 5 movies"** -> Should load `SINGLE_COLUMN_LIST`.
+3.  Ask: **"What is the weather?"** -> Should load `WEATHER_FORECAST`.
+4.  Check logs for: `INFO:generic_chat.utils.searcher:Search results for...`
+
+### 2. Dynamic UI
+To verify the agent can build UI from scratch:
+1.  Ask: **"Create a complex dashboard for my server status"**
+2.  The agent should switch to `DYNAMIC_UI` mode (check logs) and generate a custom layout.
+
+### 3. Template Factory (Offline)
+To generate new templates using an LLM:
+```bash
+# Generate 5 templates (e.g., Music Player, Recipe Card)
+python -m generic_chat.scripts.generate_templates --count 5
+
+# Generate specific topics
+python -m generic_chat.scripts.generate_templates --topic "Crypto Dashboard"
+```
+The new templates will be saved to `generic_chat/templates/` and automatically loaded when you restart the agent.

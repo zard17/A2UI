@@ -15,12 +15,16 @@
     -   Integrated into `GenericChatAgent` to filter templates based on query relevance.
     -   **Status**: Verified. Logs confirm correct template retrieval (e.g., "joke" -> `ARTICLE_VIEW`, `WEATHER`).
 
-4.  **Configuration**
     -   Switched default model to `gemini/gemini-2.0-flash-exp` for better availability/validity.
+
+5.  **Template Factory**
+    -   Implemented `TemplateGenerator` and CLI script to auto-create templates.
+    -   Updated `templates.py` to dynamically load JSON files.
+    -   **Status**: Verified with one manual sample (`MUSIC_PLAYER`). Bulk generation hits API limits.
 
 ### 🚧 In Progress / Verification
 -   **API Rate Limits**:
-    -   Verified that the code works, but currently hitting `429 Quota Exceeded` on the free tier due to embedding bursts.
+    -   Verified that the code works, but currently hitting `429 Quota Exceeded` on the free tier due to embedding bursts and generator usage.
     -   *Action*: Retry later or implement caching to reduce API calls.
 
 ### 📝 TODOs & Future Plans
